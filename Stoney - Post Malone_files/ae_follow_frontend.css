@@ -1,0 +1,113 @@
+.ae-follow-widget-container {
+    display: inline-block;
+}
+.ae-follow-hidden-auth {
+    display: none;
+}
+
+/** Pre-configured shortcode templates that show actions that the button will perform **/
+
+.ae-follow-widget-template-complete {
+    display: none;
+}
+
+.ae-follow-widget-preconf-container .bt-text-complete {
+    display: none;
+}
+
+.ae-follow-widget-template {
+    text-align: center;
+    width: 339px;
+    margin: 0 auto;
+}
+
+.ae-follow-widget-template .ae-follow-spotify-button .bt-text {
+    line-height: 16px;
+}
+
+.ae-follow-widget-actions {
+    width: 337px;
+    position: relative;
+    min-height: 50px;
+    background: #222326;
+    border: 1px solid #383838;
+    color: #fff;
+    text-align: left;
+}
+
+.ae-follow-action {
+    width: 100%;
+    min-height: 69px;
+    border-bottom: 2px solid #121314;
+    display: flex;
+    align-items: center;
+    align-content: center;
+}
+
+.ae-follow-action:last-child {
+    border-bottom: 0;
+}
+
+.ae-follow-action .action-label {
+    font-size: 17px;
+    flex: 1 0px;
+}
+
+.ae-follow-action .action-icon {
+    flex: 0 auto;
+    max-width: 60px;
+    min-height: 35px;
+    background-size: 36px 35px;
+    background-repeat: no-repeat;
+    background-position: center;
+    flex: 1 0px;
+}
+
+.ae-follow-action .action-check {
+    max-width: 50px;
+    min-height: 37px;
+    background-repeat: no-repeat;
+    flex: 1 0px;
+    text-decoration: none;
+    border: 0;
+}
+
+.ae-follow-action .action-check:hover {
+    text-decoration: none;
+    border: 0;
+}
+
+.ae-follow-action .action-check.checked {
+    background-image: url(../img/checked.png);
+}
+
+.ae-follow-action .action-check.unchecked {
+    background-image: url(../img/unchecked.png);
+}
+
+.ae-follow-action.follow-artist .action-icon {
+    background-image: url(../img/follow_user_icon.png);
+}
+
+.ae-follow-action.follow-playlist .action-icon {
+    background-image: url(../img/follow_playlist_icon.png);
+}
+
+.ae-follow-action.add-to-library .action-icon {
+    background-image: url(../img/add_to_library_icon.png);
+}
+
+.ae-follow-widget-template button.ae-follow-spotify-button {
+    min-width: 330px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.ae-follow-widget-template .ae-follow-spotify-button .bt-text {
+    margin-left: 0;
+    font-size: 16px;
+}
+
+.ae-follow-widget-template .ae-follow-spotify-button .bt-icon {
+    display: none;
+}

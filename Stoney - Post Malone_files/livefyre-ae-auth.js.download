@@ -1,0 +1,183 @@
+var edit_profile_link = '';
+
+/**
+* Livefyre Auth Delegate object declaration
+* - define the login, logout, view/edit profile functions
+*/
+var authDelegate = {
+    login: function (delegate) {
+        AEJSWP.aeJS.trigger.flow();
+    },
+    logout: function (errback) {
+        errback(null);
+        LFAEAUTH.remove_session_storage_token();
+        AEJSWP.logout();
+    },
+    viewProfile: function (delegate, author) {
+
+    },
+    editProfile: function (delegate, author) {
+        if (LFAEAUTH.ae_profile_link.length > 0) {
+            edit_profile_link = LFAEAUTH.ae_profile_link;
+        } else {
+            edit_profile_link = LFAEAUTH.wp_profile_link;
+        }
+        var win = window.open(edit_profile_link, "_blank");
+        win.focus();
+    }
+};
+
+/**
+* AE User logged in function
+*/
+LFAEAUTH.ae_login_handle = function(user) {
+    LFAEAUTH.event_complete('ae_user_login', user);
+};
+
+/**
+* AE User ready function
+*/
+LFAEAUTH.ae_user_handle = function(user) {
+    LFAEAUTH.event_complete('ae_user_ready', user);
+};
+
+/**
+* Event complete
+* - define which events AE/Livefyre have completed and grab their passed data
+*/
+LFAEAUTH.completed_events = {};
+
+LFAEAUTH.event_complete = function(event, data) {
+    LFAEAUTH.completed_events[event] = data;
+
+    //if Livefyre auth has loaded and AE user object has been passed then login user to LF
+    if((typeof LFAEAUTH.completed_events['livefyre_auth'] !== 'undefined')
+        && (typeof LFAEAUTH.completed_events['ae_user_ready'] !== 'undefined')
+        && (event === 'livefyre_auth' || event === 'ae_user_ready')) {
+
+        var lf_auth = LFAEAUTH.completed_events['livefyre_auth'];
+        var ae_user = AEJSWP.aeJS.user;
+
+        //authenticate user with Livefyre Widget
+        LFAEAUTH.authenticate_user(lf_auth, ae_user);
+    }
+
+    //if Livefyre auth has loaded and AE user login even has been passed then login user to LF
+    if(typeof LFAEAUTH.completed_events['livefyre_auth'] !== 'undefined'
+        && typeof LFAEAUTH.completed_events['ae_user_login'] !== 'undefined'
+        && (event === 'livefyre_auth' || event === 'ae_user_login')) {
+        var lf_auth = LFAEAUTH.completed_events['livefyre_auth'];
+        var ae_user = AEJSWP.aeJS.user;
+
+        //authenticate user with Livefyre Widget
+        LFAEAUTH.authenticate_user(lf_auth, ae_user);
+    }
+};
+
+/**
+* Authenticate User with Livefyre
+* - generates an LF auth token using the AE User ID and Username
+* - authenticates the user with given token with the Livefyre Widget
+*/
+LFAEAUTH.authenticate_user = function(lf_auth, ae_user) {
+    var ae_user_id = ae_user.data.ID;
+    var ae_username = ae_user.data.Username;
+    var session_token = LFAEAUTH.get_session_storage_token();
+    if(session_token !== false) {
+        lf_auth.authenticate({livefyre: session_token});
+    } else {
+        jQuery.ajax({
+            type: 'POST',
+            url: LFAEAUTH.ajax_url,
+            data: {
+                action: 'ae_livefyre_get_auth_token_ajax',
+                _wpnonce: LFAEAUTH.nonce,
+                ae_user_id: ae_user_id,
+                ae_username: ae_username
+            },
+            dataType: 'json',
+            success: function (response) {
+                if (response.token) {
+                    lf_auth.authenticate({livefyre: response.token});
+                    LFAEAUTH.set_session_storage_token(response.token);
+                }
+            }
+        });
+    }
+};
+
+/**
+* Get LF token from sessionStorage if it is still valid (1 hour expiry)
+*/
+LFAEAUTH.get_session_storage_token = function() {
+    if(typeof (Storage) !== 'undefined') {
+        if(sessionStorage.getItem('lf_token_time') !== false && sessionStorage.getItem('lf_token') !== false) {
+            var current_time = new Date().getTime();
+            var token_time = sessionStorage.getItem('lf_token_time');
+            //check if LF token was set less than 59 minutes ago
+            if(current_time - token_time <= 3550000) {
+                return sessionStorage.getItem('lf_token');
+            }
+        }
+    }
+    return false;
+};
+
+/**
+* Set LF token into sessionStorage and set the token time
+*/
+LFAEAUTH.set_session_storage_token = function(token) {
+    if(typeof (Storage) !== 'undefined') {
+        var current_time = new Date().getTime();
+        sessionStorage.setItem('lf_token', token);
+        sessionStorage.setItem('lf_token_time', current_time);
+    }
+}
+
+/**
+* Remove LF token from session store
+*/
+LFAEAUTH.remove_session_storage_token = function() {
+    sessionStorage.removeItem('lf_token');
+    sessionStorage.removeItem('lf_token_time');
+}
+
+/**
+* Load the Livefyre Auth Library
+* - run event complete function to tell the script that auth library is loaded
+*/
+Livefyre.require(['auth'], function (auth) {
+    auth.delegate(authDelegate);
+
+    //log user out of Livefyre if WP Loggged in session is enabled but user is not logged into WP
+    if(!AEJSWP.user_logged_in && !AEJSWP.disable_logged_in_session && auth.isAuthenticated()) {
+        LFAEAUTH.remove_session_storage_token();
+        auth.logout();
+    }
+    LFAEAUTH.event_complete('livefyre_auth', auth);
+});
+
+/**
+* Add event listener for AEJS ready
+* - run event complete function to tell the script that auth library is loaded
+*/
+AEJSWP.add_aejsready_handler("LFAEAUTH.ae_livefyre_wpaejsready");
+LFAEAUTH.ae_livefyre_wpaejsready = function(aeJS) {
+    //add handler function for login, this will fire when successfully logged in
+    if(!LFAEAUTH.disable_livefyre_auth) {
+        aeJS.events.onLogin.addHandler(LFAEAUTH.ae_login_handle);
+        aeJS.events.onUser.addHandler(LFAEAUTH.ae_user_handle);
+    }
+};
+
+/**
+* Logout anchor listener
+*/
+jQuery(document).ready(function() {
+    jQuery(".ae-wp-logout-anchor").click(function (e) {
+        e.preventDefault();
+        LFAEAUTH.remove_session_storage_token();
+        Livefyre.auth.logout();
+        AEJSWP.logout();
+    });
+});

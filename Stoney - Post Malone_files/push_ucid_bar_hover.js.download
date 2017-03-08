@@ -1,0 +1,24 @@
+jQuery(document).ready(function () {
+	(function() {
+		var ucidBar = jQuery("#ucid_bar");
+		var ucidBarHiddenTop = ucidBar.css("top");
+		var animationStartTimer = null;
+		ucidBar.hover(
+				function(e) {
+					var $this = jQuery(this);
+					if(jQuery('.sso_loggedin').length != 0) {	// only use hover effect when user logged in
+						animationStartTimer = setTimeout(
+								function() { $this.animate({top: 0}, {queue: false}); },
+								150
+						);						
+					}
+				},
+				function(e) {
+					if (animationStartTimer) {
+						clearTimeout(animationStartTimer);
+					}
+					jQuery(this).animate({top: ucidBarHiddenTop}, {queue: false});
+				}
+		);
+	})();
+});

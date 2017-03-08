@@ -1,0 +1,10 @@
+jQuery(document).ready(function () {
+	(function() {
+		var ucidBar = jQuery("#ucid_bar");
+		jQuery(document.body).bind("ucidActivate", function(e) {
+			var bgcolor = jQuery("#callToAction").css("background-color");
+			ucidBar[0].scrollIntoView();
+			jQuery("#callToAction").css("background-color", "#FFF202").animate({backgroundColor: bgcolor}, {duration: 3000, queue: false});
+		});
+	})();
+});
